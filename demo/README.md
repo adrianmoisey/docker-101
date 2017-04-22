@@ -6,7 +6,7 @@ Spin up three digital ocean machines:
 
 ```
 . .token
-IMAGE=23755729
+IMAGE=`doctl -t $TOKEN compute image list | grep docker-16.04 | cut -f1`
 doctl -t $TOKEN compute image list | grep Docker
 doctl -t $TOKEN compute droplet create swarm01 \
   --image $IMAGE --region lon1 --size 2gb --ssh-keys 6915365
