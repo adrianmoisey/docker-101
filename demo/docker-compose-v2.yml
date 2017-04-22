@@ -1,0 +1,64 @@
+---
+version: '3'
+services:
+  broker:
+    image: rabbitmq:3-management
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "15672:15672"
+    networks:
+      - back-tier
+  web:
+    image: markstory/lint-review
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command:
+      - gunicorn
+      - -c
+      - /code/settings.py
+      - lintreview.web:app
+    environment: &lintreview_env
+      LINTREVIEW_GUNICORN_BIND: '0.0.0.0:5000'
+      LINTREVIEW_GUNICORN_LOG_ACCESS: '-'
+      LINTREVIEW_GUNICORN_LOG_ERROR: '-'
+    ports:
+      - "5000:5000"
+    networks:
+      - front-tier
+      - back-tier
+  worker:
+    image: markstory/lint-review
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command:
+      - celery
+      - -A
+      - lintreview.tasks
+      - worker
+      - -l
+      - info
+    environment:
+      <<: *lintreview_env
+      C_FORCE_ROOT: "true"
+    networks:
+      - back-tier
+
+networks:
+  front-tier:
+  back-tier:

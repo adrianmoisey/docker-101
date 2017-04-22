@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .inverse {
+        background: #272822;
+        color: #777872;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+      .left-column h2:last-of-type, .left-column h3:last-child {
+        color: #000;
+      }
+      .right-column {
+        width: 70%;
+        float: right;
+        padding-top: 1em;
+      }
+
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+layout: true
+class: center, middle, inverse
+---
+# Docker 101
+
+With a little bit of Swarm
+
+.footnote[By Adrian Moisey]
+---
+layout: false
+.left-column[
+  ## Who am I?
+]
+.right-column[
+- Grew up in Sun Valley
+- Been interested in tech my whole life
+
+
+- DevOps Engineer at ZappiStore
+- DevOps Meetup organiser
+- DevOpsDays Cape Town organiser
+
+
+- <i class="fa fa-fw fa-twitter"></i> adrianmoisey
+- <i class="fa fa-fw fa-github"></i> adrianmoisey
+- <i class="fa fa-fw fa-slack"></i> ZAtech - adrian
+- <i class="fa fa-fw fa-internet-explorer"></i> https://adrianmoisey.github.io/
+
+]
+
+---
+background-image: url(img/ilikedevops.jpeg)
+
+---
+# What is Docker
+
+Docker is an open-source project that automates the deployment of applications inside software containers
+
+.center[
+![](img/Docker-linux-interfaces.svg.png)]
+
+---
+class: center, middle, inverse
+# That's nice, but what does that all mean?
+---
+## Components of Docker
+### Building your image
+- Packaging (Dockerfile)
+- Layered filesystem (OverlayFS)
+- Distribution (Docker Store)
+
+### Running your image
+- Containerisation (cgroups)
+- Container orchistration (Docker Swarm and Docker Compose)
+
+--
+
+
+### These are the components of Docker we're going to talk about
+---
+class: center, middle, inverse
+# Let's make a Docker image
+---
+# Dockerfile
+
+```dockerfile
+FROM node:latest
+ADD package.json .
+RUN npm install
+COPY server.js .
+CMD ["npm", "start"]
+```
+--
+
+By running:
+```
+docker build .
+```
+we will end up with a multi-layer image. One layer per line in this file.
+
+---
+## Output of a Docker build
+
+```
+Sending build context to Docker daemon  5.12 kB
+Step 1/6 : FROM node:latest
+ ---> 47522eb1edb5
+Step 2/6 : ADD package.json .
+ ---> Using cache
+ ---> ffe92002a775
+Step 3/6 : RUN npm install
+ ---> Using cache
+ ---> 6d29f674f2e0
+Step 4/6 : COPY server.js .
+ ---> Using cache
+ ---> f8b5594da5c5
+Step 5/6 : EXPOSE 8080
+ ---> Running in 401b62938f85
+ ---> 2cf9dfdbd721
+Removing intermediate container 401b62938f85
+Step 6/6 : CMD npm start
+ ---> Running in a2273c73d949
+ ---> 0b21dc9a7728
+Removing intermediate container a2273c73d949
+Successfully built 0b21dc9a7728
+```
+---
+# Quick detour into layered filesystems
+
+.center[
+![](img/container-layers.jpg)]
+
+---
+# Docker layer caching
+
+### Each layer is cached during a build
+### Slow operations higher up in your Dockerfile (package.json, requirements.txt, Gemfile)
+### Faster operations lower down (copying in the source code)
+
+---
+# Uploading our image
+```bash
+$ docker login
+Username: adrianmoisey
+Password: ********
+Login Succeeded
+```
+```
+$ docker tag 0b21dc9a7728 adrianmoisey/myapp
+```
+```
+$ docker push adrianmoisey/myapp
+The push refers to a repository [docker.io/adrianmoisey/myapp]
+544f22ac4d38: Pushed
+fa2168457c47: Pushed
+7a9342455a36: Layer already exists
+0d284979e838: Layer already exists
+[...]
+latest: digest: sha256:d7ab06791a73986e480aacae5811647f92e6beb7831d91 size: 2842
+```
+--
+This basically uploads a each layer, as a tarball, to the remote Docker Registry.
+---
+class: center, middle, inverse
+# Let's run our Docker image
+
+---
+# Docker run
+```
+$ docker run -d -P adrianmoisey/myapp
+2accbb48bcdcc17fe25e266e4637ee5d2e9f6f3dc71de458acb780bd4b368d20
+```
+
+```
+$ docker ps --format="table {{.ID}}\t{{.Image}}\t{{.Command}}\t{{.Ports}}"
+CONTAINER ID    IMAGE                  COMMAND         PORTS
+2accbb48bcdc    adrianmoisey/myapp     "npm start"     0.0.0.0:32769->8080/tcp
+```
+
+```bash
+$ curl -v http://localhost:32769/
+*   Trying ::1...
+* Connected to localhost (::1) port 32769 (#0)
+> GET / HTTP/1.1
+> Host: localhost:32769
+> User-Agent: curl/7.43.0
+> Accept: */*
+>
+< HTTP/1.1 200 OK
+< X-Powered-By: Express
+< Content-Type: text/html; charset=utf-8
+< Content-Length: 12
+< ETag: W/"c-M6tWOb/Y57lesdjQuHeB1P/qTV0"
+< Date: Sun, 19 Mar 2017 13:18:49 GMT
+< Connection: keep-alive
+<
+Hello world
+* Connection #0 to host localhost left intact
+```
+
+---
+# Docker Compose
+Compose is a tool for defining and running multi-container Docker applications
+
+--
+```
+---
+version: '3'
+services:
+  web:
+    image: adrianmoisey/myapp
+    environment:
+      MYAPP_LISTEN_PORT: '8080'
+    ports:
+      - "8080:8080"
+    networks:
+      - localnet
+    depends_on:
+      - db
+  db:
+    image: mysql:5.6.10
+    networks:
+      - localhet
+
+networks:
+  localnet:
+```
+
+---
+
+
+
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create(
+        {
+          highlightStyle: 'monokai',
+          highlightLanguage: "default",
+          highlightLines: false
+
+        }
+      );
+    </script>
+  </body>
+</html>
