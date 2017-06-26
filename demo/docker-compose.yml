@@ -17,7 +17,7 @@ services:
   web:
     image: markstory/lint-review
     deploy:
-      replicas: 3
+      replicas: 1
       update_config:
         parallelism: 2
         delay: 10s
@@ -32,6 +32,7 @@ services:
       LINTREVIEW_GUNICORN_BIND: '0.0.0.0:5000'
       LINTREVIEW_GUNICORN_LOG_ACCESS: '-'
       LINTREVIEW_GUNICORN_LOG_ERROR: '-'
+      GITHUB_OAUTH_TOKEN: 96245b5b46f19eaf2845b065de06b5b6f93bf51a
     ports:
       - "5000:5000"
     networks:

@@ -64,6 +64,8 @@ layout: false
 .right-column[
 - Grew up in Sun Valley
 - Been interested in tech my whole life
+- I play bass guitar
+- I also enjoy cooking/smoking/drying meat
 
 
 - DevOps Engineer at ZappiStore
@@ -74,7 +76,7 @@ layout: false
 - <i class="fa fa-fw fa-twitter"></i> adrianmoisey
 - <i class="fa fa-fw fa-github"></i> adrianmoisey
 - <i class="fa fa-fw fa-slack"></i> ZAtech - adrian
-- <i class="fa fa-fw fa-internet-explorer"></i> https://adrianmoisey.github.io/
+- <i class="fa fa-fw fa-internet-explorer"></i> https://adrianmoisey.github.io/ (lol)
 
 ]
 
@@ -229,6 +231,20 @@ Hello world
 ```
 
 ---
+# Docker run
+
+## What's going on here?
+
+- It's not a Virtual machine (nothing is emulating hardware).
+- There's no kernel being booted.
+- It starts quickly.
+
+In my own words:
+The process is living inside a namedspaced filesystem and PID space.
+
+More reading: https://ericchiang.github.io/post/containers-from-scratch/
+
+---
 # Docker Compose
 Compose is a tool for defining and running multi-container Docker applications
 
@@ -257,9 +273,28 @@ networks:
 ```
 
 ---
+# Docker Compose
 
+### Uses for Docker Compose
 
+- Allow developers to test out your tool quickly and easily
+- Local development (pacakge all the requirements for the developer)
+- Defining how the appliction must run in a Docker Swarm cluster
 
+---
+# Demo time
+
+## What we'll try go through
+
+- Start/stop a single container
+- Bring up a whole compose, locally
+- Create a Docker Swarm cluster, and deploy an app there
+
+Please ask questions.
+
+---
+class: center, middle, inverse
+# Thank you.
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
